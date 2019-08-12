@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Amazon.IdentityManagement.Model;
-using s3assessment.Models;
+using S3Assessment.Models;
 
-namespace s3assessment.Processors
+namespace S3Assessment.Processors
 {
     public class JobsProcessor
     {
-        public IEnumerable<string> GetRolesUsingS3Service(List<ServiceJobToRoleAttachment> serviceJobToRoleAttachments)
+
+        private IEnumerable<string> DoGetRolesUsingS3(IEnumerable<ServiceJobToRoleAttachment> serviceJobToRoleAttachments) 
         {
             foreach (var rolesJobId in serviceJobToRoleAttachments)
             {
@@ -30,6 +31,11 @@ namespace s3assessment.Processors
 
                 Helper.Show($"Role {rolesJobId.RoleArn}, services count {servicesUsedByRole.Count}", ConsoleColor.DarkYellow);
             }
+        }
+
+        public IEnumerable<string> GetRolesUsingS3Service(List<ServiceJobToRoleAttachment> serviceJobToRoleAttachments)
+        {
+            return DoGetRolesUsingS3(serviceJobToRoleAttachments).ToHashSet();
         }
     }
 }

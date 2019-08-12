@@ -5,14 +5,10 @@ using System.Threading.Tasks;
 using Amazon.IdentityManagement;
 using Newtonsoft.Json;
 
-namespace s3assessment
+namespace S3Assessment
 {
     public static class Helper
     {
-        public static string[] ProductionBuckets =
-        {
-        };
-
         public static bool CheckIfPolicyIsFullAccess(ManagedPolicyData policyData, bool checkPolicyName = true)
         {
             if (checkPolicyName)
@@ -26,17 +22,6 @@ namespace s3assessment
             return Uri.UnescapeDataString(policyData.Document)
                        .Replace("\n", string.Empty)
                        .IndexOf("\"Action\": \"s3:*\"", StringComparison.OrdinalIgnoreCase) > 0;
-        }
-
-        public static bool CheckIfPolicyHasProductionRestriction(string document)
-        {
-            foreach (var productionBucket in ProductionBuckets)
-            {
-                if (document.Contains(productionBucket))
-                    return true;
-            }
-
-            return false;
         }
 
         public static bool CheckIfPolicyRelatesToS3(string document)

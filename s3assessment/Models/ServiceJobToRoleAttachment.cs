@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace s3assessment.Models
+namespace S3Assessment.Models
 {
     public class ServiceJobToRoleAttachment
     {
