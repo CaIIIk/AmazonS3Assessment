@@ -3,20 +3,21 @@ using System.Collections.Generic;
 using System.Text;
 using Amazon.IdentityManagement;
 
-namespace s3assessment
+namespace S3Assessment
 {
     public static class AWS
-    {
-        private static AmazonIdentityManagementServiceClient _iamClient;
+    { 
+        private static Lazy<AmazonIdentityManagementServiceClient> _iamClient = new Lazy<AmazonIdentityManagementServiceClient>
+        (
+            () => new AmazonIdentityManagementServiceClient(),
+            true
+        );
 
         public static AmazonIdentityManagementServiceClient IamClient
         {
             get
             {
-                if (_iamClient == null)
-                    _iamClient = new AmazonIdentityManagementServiceClient();
-
-                return _iamClient;
+                return _iamClient.Value;
             }
         }
     }

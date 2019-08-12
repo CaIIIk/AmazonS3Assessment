@@ -5,55 +5,55 @@ using System.Linq;
 using System.Threading.Tasks;
 using Amazon.IdentityManagement;
 using Amazon.IdentityManagement.Model;
-using s3assessment.Processors;
+using S3Assessment.Processors;
 
-namespace s3assessment
+namespace S3Assessment
 {
     class Program
     {
         static void Main(string[] args)
         {
             var rolesProcessor = new RolesProcessor();
-
             var jobs = rolesProcessor.InitiateJobsToRolesAccessAnalysis();
             rolesProcessor.ReceiveRolesPoliciesNames();
 
+            // Grab all inline and attached IAM policies
             var policiesProcessor = new PoliciesProcessor();
-
             policiesProcessor.ProcessAttachedPolicies(rolesProcessor.AttachedPolicies);
             policiesProcessor.ProcessInlinePolicies(rolesProcessor.InlinePolicies);
 
             var jobsProcessor = new JobsProcessor();
+            var rolesUsingS3Service = jobsProcessor.GetRolesUsingS3Service(jobs);
 
-            var rolesUsedS3Service = jobsProcessor.GetRolesUsingS3Service(jobs).ToList();
-            var rolesHasS3Policies = policiesProcessor.GetRolesArnThatHasS3Policies();
+            var rolesHavingS3Permissions = policiesProcessor.GetRolesArnThatHasS3Policies();
+            var policiesUsingS3Buckets = policiesProcessor.GetPoliciesGrantingS3Access(rolesUsingS3Service);
 
-            var policiesHavingProductionBucketsAccess = policiesProcessor.GetPoliciesGrantingS3Access(rolesUsedS3Service);
-
-
-            Helper.Show("**********************Roles that have S3 permission but don't use it*********************************");
-
-            foreach (var rolesHasS3Policy in rolesHasS3Policies)
+            // Finding overprivileged roles
+            Helper.Show("********************** Roles that have S3 permission but don't use S3 *********************************");
+            var unusedRoles = rolesHavingS3Permissions.Except(rolesUsingS3Service);
+            if (unusedRoles.Count() > 0) 
             {
-                if (!rolesUsedS3Service.Contains(rolesHasS3Policy))
-                {
-                    Helper.Show(rolesHasS3Policy, ConsoleColor.Red);
-                }
+                Array.ForEach(unusedRoles.ToArray(), (role) => Helper.Show(role, ConsoleColor.Red));
+            }
+            else
+            {
+                Helper.Show("No roles found!");
             }
 
-            Helper.Show("**********************Roles that don't have S3 permission but use it*********************************");
-
-            foreach (var roleUsedS3 in rolesUsedS3Service)
+            // Finding administrative roles
+            Helper.Show("********************** Roles that don't have S3 permission but use S3 *********************************");
+            var implicitRoles = rolesUsingS3Service.Except(rolesHavingS3Permissions);
+            if (implicitRoles.Count() > 0)
             {
-                if (!rolesHasS3Policies.Contains(roleUsedS3))
-                {
-                    Helper.Show(roleUsedS3, ConsoleColor.Red);
-                }
+                Array.ForEach(implicitRoles.ToArray(), (role) => Helper.Show(role, ConsoleColor.Red));
+            }
+            else
+            {
+                Helper.Show("No roles found!");
             }
 
-            Helper.Show("********************** Roles that use S3 production buckets *************************");
-
-            foreach (var policiesUsedS3Bucket in policiesHavingProductionBucketsAccess)
+            Helper.Show("********************** Roles that use S3 buckets *************************");
+            foreach (var policiesUsedS3Bucket in policiesUsingS3Buckets)
             {
                 Helper.Show(policiesUsedS3Bucket.Key, ConsoleColor.DarkBlue);
                 foreach (var policy in policiesUsedS3Bucket.Value)
@@ -63,13 +63,10 @@ namespace s3assessment
             }
 
             Helper.Show("********************** Roles that have S3 Full Access policies *************************");
-
             foreach (var roleHavingFullAccess in policiesProcessor.GetRolesWithFullAccessPolicy())
             {
                 Helper.Show(roleHavingFullAccess, ConsoleColor.DarkGreen);
             }
-
-            Console.ReadLine();
         }
     }
 }

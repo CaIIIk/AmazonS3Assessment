@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using Amazon.IdentityManagement.Model;
 
-namespace s3assessment
+namespace S3Assessment
 {
     public class PoliciesProcessor
     {
@@ -85,7 +85,7 @@ namespace s3assessment
             }
         }
 
-        public Dictionary<string, List<string>> GetPoliciesGrantingS3Access(List<string> rolesUsedS3Service)
+        public Dictionary<string, List<string>> GetPoliciesGrantingS3Access(IEnumerable<string> rolesUsedS3Service)
         {
             var result = new Dictionary<string, List<string>>();
 
@@ -99,7 +99,8 @@ namespace s3assessment
                         ServiceNamespaces = new List<string> { "s3" },
                         Arn = roleAccordingToS3
                     }))
-                    .PoliciesGrantingServiceAccess[0]
+                    .PoliciesGrantingServiceAccess
+                    .First()
                     .Policies;
 
                 foreach (var policyGrantingServiceAccess in policiesGrantingServiceAccess)
@@ -114,17 +115,13 @@ namespace s3assessment
                     Helper.Show($"Analyzing {policyKey} policy", ConsoleColor.DarkCyan);
 
                     var policy = _policies[policyKey];
-
-                    if (Helper.CheckIfPolicyHasProductionRestriction(Uri.UnescapeDataString(policy.Document)))
+                    if (result.ContainsKey(roleAccordingToS3))
                     {
-                        if (result.ContainsKey(roleAccordingToS3))
-                        {
-                            result[roleAccordingToS3].Add(policy.Name);
-                        }
-                        else
-                        {
-                            result.Add(roleAccordingToS3, new List<string> { policy.Name });
-                        }
+                        result[roleAccordingToS3].Add(policy.Name);
+                    }
+                    else
+                    {
+                        result.Add(roleAccordingToS3, new List<string> { policy.Name });
                     }
                 }
             }
@@ -132,22 +129,22 @@ namespace s3assessment
             return result;
         }
 
-        public List<string> GetRolesArnThatHasS3Policies()
+        public IEnumerable<string> GetRolesArnThatHasS3Policies()
         {
             return _policies
                 .Where(p => Helper.CheckIfPolicyRelatesToS3(Uri.UnescapeDataString(p.Value.Document)))
                 .SelectMany(i => i.Value.RolesArn)
                 .Distinct()
-                .ToList();
+                .ToHashSet();
         }
 
-        public List<string> GetRolesWithFullAccessPolicy()
+        public IEnumerable<string> GetRolesWithFullAccessPolicy()
         {
             return _policies
                 .Where(p => Helper.CheckIfPolicyIsFullAccess(p.Value))
                 .SelectMany(i => i.Value.RolesArn)
                 .Distinct()
-                .ToList();
+                .ToHashSet();
         }
     }
 }

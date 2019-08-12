@@ -16,4 +16,4 @@ RUN dotnet publish -c Release -o out
 FROM mcr.microsoft.com/dotnet/core/runtime:2.2-alpine AS runtime
 WORKDIR /app
 COPY --from=build /app/s3tool/out ./
-CMD ["dotnet", "S3assessment.dll"]
+ENTRYPOINT ["dotnet", "S3assessment.dll"]

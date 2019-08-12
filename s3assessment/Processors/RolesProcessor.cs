@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Amazon.IdentityManagement;
 using Amazon.IdentityManagement.Model;
-using s3assessment;
-using s3assessment.Models;
+using S3Assessment;
+using S3Assessment.Models;
 
 public class RolesProcessor
 {
@@ -19,7 +19,7 @@ public class RolesProcessor
 
     public RolesProcessor()
     {
-        Helper.Show("Roles receiving...", ConsoleColor.DarkCyan);
+        Helper.Show("Receiving roles...", ConsoleColor.DarkCyan);
 
         _roles = AWS.IamClient.Do(i => i.ListRolesAsync(new ListRolesRequest
         {
@@ -31,7 +31,7 @@ public class RolesProcessor
 
     public List<ServiceJobToRoleAttachment> InitiateJobsToRolesAccessAnalysis()
     {
-        Helper.Show("Jobs initiating to getting services access info...", ConsoleColor.DarkCyan);
+        Helper.Show("Initiating jobs to get access info for AWS services...", ConsoleColor.DarkCyan);
 
         return _roles.Values.Select(i =>
         {
@@ -53,7 +53,7 @@ public class RolesProcessor
 
     public void ReceiveRolesPoliciesNames()
     {
-        Helper.Show("Roles policies names receiving...", ConsoleColor.DarkCyan);
+        Helper.Show("Receiving roles and policies...", ConsoleColor.DarkCyan);
 
         foreach (Role role in _roles.Values)
         {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace s3assessment
+namespace S3Assessment
 {
     public class ManagedPolicyData
     {
